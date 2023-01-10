@@ -1,7 +1,7 @@
 import sqlite3
 connection = sqlite3.connect('ttable.db')
 cur = connection.cursor()
-cur.execute("""CREATE TABLE IF NOT EXISTS c15(
+cur.execute("""CREATE TABLE IF NOT EXISTS c18(
     number TEXT,
     monday TEXT,
     tuesday TEXT,
@@ -19,6 +19,6 @@ for i in range(1, 9):
     thur = str(input('thursday'))
     fri = str(input('friday'))
     data_tuple = (str(i), mon, tues, wed, thur, fri)
-    cur.execute("""INSERT INTO c15(number, monday, tuesday, wednesday, thursday, friday) 
+    cur.execute("""INSERT INTO c18(number, monday, tuesday, wednesday, thursday, friday) 
                    VALUES(?, ?, ?, ?, ?, ?);""", data_tuple)
     connection.commit()
