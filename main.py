@@ -7,7 +7,7 @@ from class_table_check import *
 from config import API_TOKEN, PROXY_URL
 
 storage = MemoryStorage()
-bot = Bot(token=API_TOKEN)
+bot = Bot(token=API_TOKEN, proxy=PROXY_URL)
 dp = Dispatcher(bot, storage=storage)
 
 
