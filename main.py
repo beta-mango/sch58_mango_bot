@@ -18,6 +18,8 @@ class UserState(StatesGroup):
     typing_subs_stream = State()
     other_ttable = State()
     other_act = State()
+    changing_class = State()
+    first_time = State()
 
 class_id = {'c01': '7А', 'c02': '7Б', 'c03': '7В', 'c04': '7Г', 'c05': '8А', 'c06': '8Б БМ', 'c07': '8Б ФХ',
             'c08': '8В', 'c09': '8Г', 'c10': '8Д', 'c11': '9А ФМ', 'c12': '9А МИ', 'c13': '9Б', 'c14': '9В',
@@ -58,8 +60,7 @@ async def start_message(message: types.Message):
         user_class = class_id[user_id_class[0:3]]
         mes = 'Нашел тебя в базе данных. Твой класс: ' + user_class + '. Выбери, что делать дальше'
         menu = kb1()
-        markup = types.ReplyKeyboardMarkup(keyboard=menu, resize_keyboard=True, row_width=1)
-        await message.answer(mes, reply_markup=markup)
+        await message.answer(mes, reply_markup=menu)
     else:
         keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
 
@@ -267,10 +268,11 @@ async def finishing(message: types.Message):
 @dp.message_handler(lambda message: message.text == 'Изменить любимый класс\U0001F504')
 async def new_class(message: types.Message):
     markup5 = kb()
+    await UserState.changing_class.set()
     await message.answer('Выбери новый класс', reply_markup=markup5)
 
 
-@dp.message_handler(lambda message: message.text in checker)
+@dp.message_handler(lambda message: message.text in checker, state=UserState.changing_class)
 async def class_id_changing(message: types.Message):
     user_id = str(message.from_user.id)
     file_ids = open('user_ids_db.txt', 'r')
@@ -411,8 +413,9 @@ async def action(message: types.Message, state: FSMContext):
 
 
 @dp.message_handler(lambda message: message.text == 'Вернуться в меню\U0001F3E0')
-async def main_menu(message: types.Message):
+async def main_menu(message: types.Message, state: FSMContext):
     kb = kb1()
+    await state.finish()
     await message.answer('Ты вернулся в главное меню', reply_markup=kb)
 
 
@@ -446,7 +449,7 @@ async def cancel(message: types.Message, state: FSMContext):
 
 
 @dp.message_handler(
-    lambda message: message.text not in checker and message.text not in checker3 and message.text not in checker4, state='*')
+    lambda message: message.text not in checker3 and message.text not in checker4, state='*')
 async def other_mes(message: types.Message):
     await message.answer(
         'Скорее всего, ты ввел эту команду, потому что ошибся или захотел сломать бота. Пожалуйста, воспользуйся '

@@ -3,7 +3,6 @@ from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher.filters.state import State, StatesGroup
 import asyncio
 from aiogram import Bot, Dispatcher, types
-from class_table_check import *
 from config import API_TOKEN, PROXY_URL
 
 storage = MemoryStorage()
@@ -23,7 +22,7 @@ ph_ids = []
 @dp.message_handler(content_types=['photo'])
 async def id_photo(message: types.message):
     ph_ids.append(message.photo[0].file_id)
-    await message.answer('got it')
+    print(message.photo[0].file_id)
 
 
 @dp.message_handler(commands=['set'])
