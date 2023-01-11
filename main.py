@@ -412,7 +412,7 @@ async def action(message: types.Message, state: FSMContext):
         await message.answer_photo(photo_id)
 
 
-@dp.message_handler(lambda message: message.text == 'Вернуться в меню\U0001F3E0')
+@dp.message_handler(lambda message: message.text == 'Вернуться в меню\U0001F3E0', state='*')
 async def main_menu(message: types.Message, state: FSMContext):
     kb = kb1()
     await state.finish()
