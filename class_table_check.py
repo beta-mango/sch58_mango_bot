@@ -109,8 +109,8 @@ def kb4():
     return markup2
 
 
-def monday(class_id):
-    query = 'SELECT monday FROM ' + class_id
+def get_tt(day, class_id):
+    query = f'SELECT {day} FROM {class_id}'
     cur.execute(query)
     lessons = cur.fetchall()
     les_new = []
@@ -125,62 +125,6 @@ def monday(class_id):
             return les_new
 
 
-def tuesday(class_id):
-    query = 'SELECT tuesday FROM ' + class_id
-    cur.execute(query)
-    lessons = cur.fetchall()
-    les_new = []
-    for les in lessons:
-        a = str(les)
-        les_new.append(a[2:-3])
-    while True:
-        try:
-            b = les_new.index(' ')
-            del (les_new[b])
-        except Exception:
-            return les_new
-def wednes(class_id):
-    query = 'SELECT wednesday FROM ' + class_id
-    cur.execute(query)
-    lessons = cur.fetchall()
-    les_new = []
-    for les in lessons:
-        a = str(les)
-        les_new.append(a[2:-3])
-    while True:
-        try:
-            b = les_new.index(' ')
-            del (les_new[b])
-        except Exception:
-            return les_new
-def thursday(class_id):
-    query = 'SELECT thursday FROM ' + class_id
-    cur.execute(query)
-    lessons = cur.fetchall()
-    les_new = []
-    for les in lessons:
-        a = str(les)
-        les_new.append(a[2:-3])
-    while True:
-        try:
-            b = les_new.index(' ')
-            del (les_new[b])
-        except Exception:
-            return les_new
-def friday(class_id):
-    query = 'SELECT friday FROM ' + class_id
-    cur.execute(query)
-    lessons = cur.fetchall()
-    les_new = []
-    for les in lessons:
-        a = str(les)
-        les_new.append(a[2:-3])
-    while True:
-        try:
-            b = les_new.index(' ')
-            del (les_new[b])
-        except Exception:
-            return les_new
 def tt_photo(class_id):
     id = photo_ids[class_id]
     return id

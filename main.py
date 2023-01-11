@@ -24,7 +24,8 @@ class_id = {'c01': '7А', 'c02': '7Б', 'c03': '7В', 'c04': '7Г', 'c05': '8А'
             'c15': '9Г', 'c16': '9Д', 'c17': '10А ФМ', 'c18': '10А МЭ', 'c19': '10Б', 'c20': '10В БМ', 'c21': '10В ГУМ',
             'c22': '11А', 'c23': '11Б', 'c24': '11В МИ', 'c25': '11В БМ', 'c26': '11Г', 'c27': '11Д'}
 checker = class_id.values()
-
+days = {'Понедельник': 'monday', 'Вторник': 'tuesday', 'Среда': 'wednesday', 'Четверг': 'thursday', 'Пятница': 'friday'}
+checking = list(days.keys())
 a = ' '
 
 checker3 = ['Понедельник', "Вторник", "Среда", "Четверг", "Пятница", 'Фото\U0001F4F8']
@@ -337,8 +338,8 @@ async def ttables(message: types.Message):
     await message.answer('Выбери день', reply_markup=markup2)
 
 
-@dp.message_handler(lambda message: message.text == 'Понедельник')
-async def tt_monday(message: types.Message):
+@dp.message_handler(lambda message: message.text in checking)
+async def tt(message: types.Message):
     user_id = str(message.from_user.id)
     file_id = open('user_ids_db.txt', 'r')
     lines = file_id.readlines()
@@ -346,7 +347,8 @@ async def tt_monday(message: types.Message):
         if user_id in line:
             user_class_id = line[0:3]
             break
-    tt = monday(user_class_id)
+    weekday = days[message.text]
+    tt = get_tt(weekday, user_class_id)
     count = 1
     mes_tt = ''
     for i in tt:
@@ -355,81 +357,6 @@ async def tt_monday(message: types.Message):
     mes_tt_final = message.text + ':' + '\n' + mes_tt
     await message.answer(mes_tt_final)
 
-
-@dp.message_handler(lambda message: message.text == 'Вторник')
-async def tt_tuesday(message: types.Message):
-    user_id = str(message.from_user.id)
-    file_id = open('user_ids_db.txt', 'r')
-    lines2 = file_id.readlines()
-    for line in lines2:
-        if user_id in line:
-            user_class_id = line[0:3]
-            break
-    tt = tuesday(user_class_id)
-    count = 1
-    mes_tt = ''
-    for i in tt:
-        mes_tt += str(count) + '. ' + i + '\n'
-        count += 1
-    mes_tt_final = message.text + ':' + '\n' + mes_tt
-    await message.answer(mes_tt_final)
-
-
-@dp.message_handler(lambda message: message.text == 'Среда')
-async def tt_wednes(message: types.Message):
-    user_id = str(message.from_user.id)
-    file_id = open('user_ids_db.txt', 'r')
-    lines2 = file_id.readlines()
-    for line in lines2:
-        if user_id in line:
-            user_class_id = line[0:3]
-            break
-    tt = wednes(user_class_id)
-    count = 1
-    mes_tt = ''
-    for i in tt:
-        mes_tt += str(count) + '. ' + i + '\n'
-        count += 1
-    mes_tt_final = message.text + ':' + '\n' + mes_tt
-    await message.answer(mes_tt_final)
-
-
-@dp.message_handler(lambda message: message.text == 'Четверг')
-async def tt_thursday(message: types.Message):
-    user_id = str(message.from_user.id)
-    file_id = open('user_ids_db.txt', 'r')
-    lines2 = file_id.readlines()
-    for line in lines2:
-        if user_id in line:
-            user_class_id = line[0:3]
-            break
-    tt = thursday(user_class_id)
-    count = 1
-    mes_tt = ''
-    for i in tt:
-        mes_tt += str(count) + '. ' + i + '\n'
-        count += 1
-    mes_tt_final = message.text + ':' + '\n' + mes_tt
-    await message.answer(mes_tt_final)
-
-
-@dp.message_handler(lambda message: message.text == 'Пятница')
-async def tt_friday(message: types.Message):
-    user_id = str(message.from_user.id)
-    file_id = open('user_ids_db.txt', 'r')
-    lines2 = file_id.readlines()
-    for line in lines2:
-        if user_id in line:
-            user_class_id = line[0:3]
-            break
-    tt = friday(user_class_id)
-    count = 1
-    mes_tt = ''
-    for i in tt:
-        mes_tt += str(count) + '. ' + i + '\n'
-        count += 1
-    mes_tt_final = message.text + ':' + '\n' + mes_tt
-    await message.answer(mes_tt_final)
 
 
 @dp.message_handler(lambda message: message.text == 'Фото расписания\U0001F4F8')
@@ -467,49 +394,10 @@ async def choice(message: types.Message, state: FSMContext):
 async def action(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         a = data['class_id']
-    if message.text == 'Понедельник':
+    if message.text in checking:
         day = message.text
-        tt = monday(a)
-        count = 1
-        mes_tt = ''
-        for i in tt:
-            mes_tt += str(count) + '. ' + i + '\n'
-            count += 1
-        mes_tt_final = day + ':' + '\n' + mes_tt
-        await message.answer(mes_tt_final)
-    elif message.text == 'Вторник':
-        day = message.text
-        tt = tuesday(a)
-        count = 1
-        mes_tt = ''
-        for i in tt:
-            mes_tt += str(count) + '. ' + i + '\n'
-            count += 1
-        mes_tt_final = day + ':' + '\n' + mes_tt
-        await message.answer(mes_tt_final)
-    elif message.text == 'Среда':
-        day = message.text
-        tt = wednes(a)
-        count = 1
-        mes_tt = ''
-        for i in tt:
-            mes_tt += str(count) + '. ' + i + '\n'
-            count += 1
-        mes_tt_final = day + ':' + '\n' + mes_tt
-        await message.answer(mes_tt_final)
-    elif message.text == 'Четверг':
-        day = message.text
-        tt = thursday(a)
-        count = 1
-        mes_tt = ''
-        for i in tt:
-            mes_tt += str(count) + '. ' + i + '\n'
-            count += 1
-        mes_tt_final = day + ':' + '\n' + mes_tt
-        await message.answer(mes_tt_final)
-    elif message.text == 'Пятница':
-        day = message.text
-        tt = friday(a)
+        weekday = days[day]
+        tt = get_tt(weekday, a)
         count = 1
         mes_tt = ''
         for i in tt:
