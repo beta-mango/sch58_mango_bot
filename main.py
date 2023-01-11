@@ -273,7 +273,7 @@ async def new_class(message: types.Message):
 
 
 @dp.message_handler(lambda message: message.text in checker, state=UserState.changing_class)
-async def class_id_changing(message: types.Message):
+async def class_id_changing(message: types.Message, state: FSMContext):
     user_id = str(message.from_user.id)
     file_ids = open('user_ids_db.txt', 'r')
     lines = file_ids.readlines()
@@ -289,6 +289,7 @@ async def class_id_changing(message: types.Message):
     file_ids.writelines(lines)
     file_ids.close()
     new_menu = kb1()
+    await state.finish()
     await message.answer('Успешно изменено. Возвращаемся в главное меню', reply_markup=new_menu)
 
 
