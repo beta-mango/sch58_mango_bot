@@ -2,7 +2,7 @@ from aiogram.dispatcher import FSMContext
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher.filters.state import State, StatesGroup
 import asyncio
-from aiogram import Bot, Dispatcher, types
+from aiogram import Bot, Dispatcher, types, executor
 from class_table_check import *
 from config import API_TOKEN, PROXY_URL
 
@@ -171,7 +171,10 @@ async def typing(message: types.Message, state: FSMContext):
         lines_new = file_id.readlines()
         for b in lines_new:
             if id_class in b:
-                await bot.send_message(chat_id=int(b[3::]), text=mes)
+                try:
+                    await bot.send_message(chat_id=int(b[3::]), text=mes)
+                except Exception:
+                    continue
         await message.answer('Замены отправлены пользователям из класса ' + text_class, reply_markup=klav)
         await UserState.choosing_class.set()
     else:
@@ -206,7 +209,10 @@ async def stream_subs(message: types.Message, state: FSMContext):
         for id_class in id_classes:
             for b in lines_new:
                 if id_class in b:
-                    await bot.send_message(chat_id=int(b[3::]), text=mes)
+                    try:
+                        await bot.send_message(chat_id=int(b[3::]), text=mes)
+                    except Exception:
+                        continue
         await message.answer('Замены отправлены пользователям из класса выбранной параллели', reply_markup=klav)
         await UserState.choosing_class.set()
     else:
@@ -235,7 +241,10 @@ async def sender_two(message: types.Message, state: FSMContext):
         print(line[4:-2])
         sender_id.append(int(line[3::]))
     for ids in sender_id:
-        await bot.send_message(chat_id=ids, text=message.text)
+        try:
+            await bot.send_message(chat_id=ids, text=message.text)
+        except Exception:
+            continue
     await message.answer('Отправлено!', reply_markup=kb)
     await state.finish()
 
@@ -249,8 +258,7 @@ async def save_id(message: types.Message):
     ids_file.write(id_full + '\n')
     ids_file.close()
     menu1 = kb1()
-    markup = types.ReplyKeyboardMarkup(keyboard=menu1, resize_keyboard=True, row_width=1)
-    await message.answer('Ты в главном меню', reply_markup=markup)
+    await message.answer('Ты в главном меню', reply_markup=menu1)
 
 
 @dp.message_handler(commands=['finish'])
@@ -260,7 +268,10 @@ async def finishing(message: types.Message):
     f3 = open('subsp.txt', 'r').read()
     for line in f1:
         if line[0:3] not in f2 and line[0:3] not in f3:
-            await bot.send_message(chat_id=int(line[3::]), text=class_id[line[0:3]] + ' - замен на завтра нет')
+            try:
+                await bot.send_message(chat_id=int(line[3::]), text=class_id[line[0:3]] + ' - замен на завтра нет')
+            except Exception:
+                continue
         else:
             continue
 
@@ -457,13 +468,11 @@ async def other_mes(message: types.Message):
         'клавиатурой на экране')
 
 
-async def main():
-    await dp.start_polling(bot)
 
 
 if __name__ == '__main__':
     try:
-        asyncio.run(main())
+         executor.start_polling(dp, timeout=60)
     except Exception as error:
         log = open('utils/bot_log.txt', 'a')
         log.write(str(error) + '\n')
