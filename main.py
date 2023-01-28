@@ -4,6 +4,7 @@ from aiogram.dispatcher.filters.state import State, StatesGroup
 import asyncio
 from aiogram import Bot, Dispatcher, types, executor
 from class_table_check import *
+import datetime
 from config import API_TOKEN, PROXY_URL
 
 storage = MemoryStorage()
@@ -19,7 +20,7 @@ class UserState(StatesGroup):
     other_ttable = State()
     other_act = State()
     changing_class = State()
-    first_time = State()
+    subclass = State()
 
 class_id = {'c01': '7А', 'c02': '7Б', 'c03': '7В', 'c04': '7Г', 'c05': '8А', 'c06': '8Б БМ', 'c07': '8Б ФХ',
             'c08': '8В', 'c09': '8Г', 'c10': '8Д', 'c11': '9А ФМ', 'c12': '9А МИ', 'c13': '9Б', 'c14': '9В',
@@ -29,11 +30,11 @@ checker = class_id.values()
 days = {'Понедельник': 'monday', 'Вторник': 'tuesday', 'Среда': 'wednesday', 'Четверг': 'thursday', 'Пятница': 'friday'}
 checking = list(days.keys())
 a = ' '
-
+weekdays = {0: 'понедельник', 1: 'вторник', 2: 'среду', 3: 'четверг', 4: 'пятницу'}
 checker3 = ['Понедельник', "Вторник", "Среда", "Четверг", "Пятница", 'Фото\U0001F4F8']
 checker4 = ['Понедельник', "Вторник", "Среда", "Четверг", "Пятница", "Фото расписания\U0001F4F8",
             "Расписание другого класса", "Галя, отмена!", "Посмотреть замены\U0001F440",
-            "Изменить любимый класс\U0001F504", "Вернуться в меню\U0001F3E0", "Назад", "Выбор класса"]
+            "Изменить любимый класс\U0001F504", "Домой\U0001F3E0", "Назад", "Выбор класса"]
 class_stream = ['7', '8', '9', '10', '11']
 seven = ['c01', 'c02', 'c03', 'c04']
 eight = ['c05', 'c06', 'c07', 'c08', 'c09', 'c10']
@@ -100,6 +101,18 @@ async def start_message(message: types.Message):
             reply_markup=keyboard)
 
 
+@dp.message_handler(commands=['update'])
+async def updating(message: types.Message):
+    with open('user_ids_db.txt', 'r') as f:
+        lines = f.readlines()
+        for line in lines:
+            try:
+                await bot.send_message(chat_id=int(line[3::]), text='Бот запущен', reply_markup=kb1())
+            except Exception:
+                continue
+    await message.answer('Done')
+
+
 @dp.message_handler(commands=['ZV'])
 async def substitutions(message: types.Message, state: FSMContext):
     kbrd = types.ReplyKeyboardMarkup(resize_keyboard=True)
@@ -124,6 +137,11 @@ async def choosing_class(message: types.Message, state: FSMContext):
     if message.text == 'Новый день':
         open('subs.txt', 'w').close()
         open('subsp.txt', 'w').close()
+        with open('subs.txt', 'w') as dating:
+            day_int = datetime.date.today().weekday() + 1
+            if day_int == 7:
+                day_int = 0
+            dating.write(str(day_int) + '\n')
     elif message.text in class_stream:
         streamed = stream_id[message.text]
         async with state.proxy() as data1:
@@ -238,7 +256,6 @@ async def sender_two(message: types.Message, state: FSMContext):
     f = open('user_ids_db.txt', 'r')
     lines = f.readlines()
     for line in lines:
-        print(line[4:-2])
         sender_id.append(int(line[3::]))
     for ids in sender_id:
         try:
@@ -313,12 +330,18 @@ async def view_subs(message: types.Message):
     lines2 = f2.readlines()
     lines3 = f3.readlines()
     us_id = str(message.from_user.id)
+    try:
+        current = lines[0]
+        day_txt = weekdays[int(current)]
+        del(lines[0])
+    except IndexError:
+        day_txt = 'завтра'
     for line2 in lines2:
         if us_id in line2:
             class_ids = line2[0:3]
             break
     class_text = class_id[class_ids]
-    mes = class_text + ', замены на завтра\n'
+    mes = f'{class_text}, замены на {day_txt}:\n'
     count = 0
     f.close()
     f2.close()
@@ -329,6 +352,53 @@ async def view_subs(message: types.Message):
             mes += line3[5::]
     for line in lines:
         if class_ids in line:
+            count += 1
+            mes += line[5::]
+    if count == 0:
+        await message.answer('Замен на завтра нет')
+        await message.answer('Хотите посмотреть замены других классов?', reply_markup=call_kb())
+    else:
+        await message.answer(mes)
+        await message.answer('Хотите посмотреть замены других классов?', reply_markup=call_kb())
+
+
+@dp.callback_query_handler(text='yes')
+async def sub_agree(call: types.CallbackQuery):
+    await call.message.delete()
+    await UserState.subclass.set()
+    await call.message.answer('Выбери класс', reply_markup=kb())
+    await call.answer()
+
+
+@dp.callback_query_handler(text='no')
+async def sub_disagree(callback_query: types.CallbackQuery):
+    await callback_query.message.delete()
+    await callback_query.answer()
+
+
+@dp.message_handler(lambda message: message.text in checker, state=UserState.subclass)
+async def sub_sender(message: types.Message, state: FSMContext):
+    id_of_class = list(class_id.keys())[list(class_id.values()).index(message.text)]
+    f = open('subs.txt', 'r')
+    f3 = open('subsp.txt', 'r')
+    lines = f.readlines()
+    lines3 = f3.readlines()
+    try:
+        current = lines[0]
+        day_txt = weekdays[int(current)]
+        del(lines[0])
+    except IndexError:
+        day_txt = 'завтра'
+    mes = f'{message.text}, замены на {day_txt}:\n'
+    count = 0
+    f.close()
+    f3.close()
+    for line3 in lines3:
+        if id_of_class in line3:
+            count += 1
+            mes += line3[5::]
+    for line in lines:
+        if id_of_class in line:
             count += 1
             mes += line[5::]
     if count == 0:
@@ -347,7 +417,7 @@ async def ttables(message: types.Message):
     btn5 = types.KeyboardButton('Пятница')
     btn6 = types.KeyboardButton('Фото расписания\U0001F4F8')
     btn7 = types.KeyboardButton('Расписание другого класса')
-    btn8 = types.KeyboardButton('Вернуться в меню\U0001F3E0')
+    btn8 = types.KeyboardButton('Домой\U0001F3E0')
     markup2.add(btn1, btn2, btn3, btn4, btn5, btn6, btn7, btn8)
     await message.answer('Выбери день', reply_markup=markup2)
 
@@ -401,7 +471,7 @@ async def choice(message: types.Message, state: FSMContext):
 
     markup10 = kb4()
     await UserState.other_act.set()
-    await message.answer('Выбери день', reply_markup=markup10)
+    await message.answer('Выбери действие', reply_markup=markup10)
 
 
 @dp.message_handler(lambda message: message.text in checker3, state=UserState.other_act)
@@ -424,7 +494,7 @@ async def action(message: types.Message, state: FSMContext):
         await message.answer_photo(photo_id)
 
 
-@dp.message_handler(lambda message: message.text == 'Вернуться в меню\U0001F3E0', state='*')
+@dp.message_handler(lambda message: message.text == 'Домой\U0001F3E0', state='*')
 async def main_menu(message: types.Message, state: FSMContext):
     kb = kb1()
     await state.finish()
@@ -441,7 +511,23 @@ async def back_my_class(message: types.Message, state: FSMContext):
     btn5 = types.KeyboardButton('Пятница')
     btn6 = types.KeyboardButton('Фото расписания\U0001F4F8')
     btn7 = types.KeyboardButton('Расписание другого класса')
-    btn8 = types.KeyboardButton('Вернуться в меню\U0001F3E0')
+    btn8 = types.KeyboardButton('Домой\U0001F3E0')
+    markup2.add(btn1, btn2, btn3, btn4, btn5, btn6, btn7, btn8)
+    await state.finish()
+    await message.reply('Исполнено.', reply_markup=markup2)
+
+
+@dp.message_handler(lambda message: message.text == 'Назад', state=UserState.other_act)
+async def back_my_class(message: types.Message, state: FSMContext):
+    markup2 = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
+    btn1 = types.KeyboardButton('Понедельник')
+    btn2 = types.KeyboardButton('Вторник')
+    btn3 = types.KeyboardButton('Среда')
+    btn4 = types.KeyboardButton('Четверг')
+    btn5 = types.KeyboardButton('Пятница')
+    btn6 = types.KeyboardButton('Фото расписания\U0001F4F8')
+    btn7 = types.KeyboardButton('Расписание другого класса')
+    btn8 = types.KeyboardButton('Домой\U0001F3E0')
     markup2.add(btn1, btn2, btn3, btn4, btn5, btn6, btn7, btn8)
     await state.finish()
     await message.reply('Исполнено.', reply_markup=markup2)
@@ -472,7 +558,7 @@ async def other_mes(message: types.Message):
 
 if __name__ == '__main__':
     try:
-         executor.start_polling(dp, timeout=60)
+         executor.start_polling(dp, timeout=60, skip_updates=True)
     except Exception as error:
         log = open('utils/bot_log.txt', 'a')
         log.write(str(error) + '\n')
