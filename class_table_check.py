@@ -44,7 +44,7 @@ def kb():
     c25 = types.KeyboardButton('11В БМ')
     c26 = types.KeyboardButton('11Г')
     c27 = types.KeyboardButton('11Д')
-    c28 = types.KeyboardButton('Вернуться в меню\U0001F3E0')
+    c28 = types.KeyboardButton('Домой\U0001F3E0')
     keyboard.add(c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12, c13, c14, c15, c16, c17, c18, c19, c20, c21, c22,
                  c23, c24, c25, c26, c27, c28)
     return keyboard
@@ -86,6 +86,14 @@ def kb2():
     return keyboard
 
 
+def call_kb():
+    calling = types.InlineKeyboardMarkup(row_width=2)
+    call0 = types.InlineKeyboardButton(text='Да✅', callback_data='yes')
+    call1 = types.InlineKeyboardButton(text='Нет❌', callback_data='no')
+    calling.add(call0, call1)
+    return calling
+
+
 def kb1():
     kbrd = [
         [types.KeyboardButton('Узнать расписание\U0001F4DA')],
@@ -98,6 +106,7 @@ def kb1():
 
 def kb4():
     markup2 = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
+    btn0 = types.KeyboardButton('Назад')
     btn1 = types.KeyboardButton('Понедельник')
     btn2 = types.KeyboardButton('Вторник')
     btn3 = types.KeyboardButton('Среда')
@@ -105,7 +114,7 @@ def kb4():
     btn5 = types.KeyboardButton('Пятница')
     btn6 = types.KeyboardButton('Фото\U0001F4F8')
     btn8 = types.KeyboardButton('Выбор класса')
-    markup2.add(btn1, btn2, btn3, btn4, btn5, btn6, btn8)
+    markup2.add(btn1, btn2, btn3, btn4, btn5, btn6, btn8, btn0)
     return markup2
 
 
