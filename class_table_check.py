@@ -14,6 +14,15 @@ def check(id):
     return True
 
 
+def sub_kb():
+    kbsub = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
+    b1 = types.KeyboardButton('Новый день')
+    b2 = types.KeyboardButton('Отправить')
+    b3 = types.KeyboardButton('Галя, отмена!')
+    kbsub.add(b1, b2, b3)
+    return kbsub
+
+
 def kb():
     keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
 
