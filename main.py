@@ -5,7 +5,7 @@ import asyncio
 from aiogram import Bot, Dispatcher, types, executor
 from class_table_check import *
 import datetime
-from config import API_TOKEN, PROXY_URL
+from config import PROXY_URL, API_TOKEN
 
 storage = MemoryStorage()
 bot = Bot(token=API_TOKEN, proxy=PROXY_URL)
@@ -115,28 +115,54 @@ async def updating(message: types.Message):
 
 @dp.message_handler(commands=['ZV'])
 async def substitutions(message: types.Message, state: FSMContext):
-    kbrd = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    btn = types.KeyboardButton('Галя, отмена!')
-    btn2 = types.KeyboardButton('Новый день')
-    kbrd.add(btn, btn2)
     await message.answer(
         'Ты в редакторе замен. Отправь мне в виде сообщения класс, в котором завтра будут замены. Например: 9А '
         'ФМ\nПеред тем, как начать вводить новые замены, напиши Новый день',
-        reply_markup=kbrd)
+        reply_markup=sub_kb())
     await UserState.choosing_class.set()
 
 
 @dp.message_handler(
-    lambda message: message.text in checker or message.text in class_stream or message.text == 'Новый день',
+    lambda message: message.text in checker or message.text in class_stream or message.text == 'Новый день' or message.text == 'Отправить',
     state=UserState.choosing_class)
 async def choosing_class(message: types.Message, state: FSMContext):
-    bt = types.KeyboardButton('Подтвердить')
-    bt3 = types.KeyboardButton('Галя, отмена!')
+    bt3 = types.KeyboardButton('К выбору класса')
     kbr = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    kbr.add(bt, bt3)
-    if message.text == 'Новый день':
+    kbr.add(bt3)
+    if message.text == 'Отправить':
+        subs = {}
+        sub = ''
+        classes = []
+        f = open('subs.txt', 'r')
+        lines = f.readlines()
+        del(lines[0])
+        for line in lines:
+            if line[0:3] not in classes:
+                classes.append(line[0:3])
+        for classing in classes:
+            sub = ''
+            for line in lines:
+                if classing in line and line[5::] not in sub:
+                    sub += line[5::]
+            subs[classing] = sub
+        f.close()
+        with open('user_ids_db.txt', 'r') as file_id:
+            users = file_id.readlines()
+            class_ids = list(subs.keys())
+            for c in class_ids:
+                sending = []
+                mes = f'{class_id[c]}, замены на завтра:\n' + subs[c]
+                for u in users:
+                    if c in u:
+                        sending.append(u[3::])
+                for s in sending:
+                    try:
+                        await bot.send_message(chat_id=int(s), text=mes)
+                    except Exception:
+                        continue
+        await message.answer('Замены отправлены пользователям')
+    elif message.text == 'Новый день':
         open('subs.txt', 'w').close()
-        open('subsp.txt', 'w').close()
         with open('subs.txt', 'w') as dating:
             day_int = datetime.date.today().weekday() + 1
             if day_int == 7:
@@ -166,78 +192,27 @@ async def choosing_class(message: types.Message, state: FSMContext):
         await UserState.typing_subs.set()
 
 
-@dp.message_handler(lambda message: message.text != 'Галя, отмена!', state=UserState.typing_subs)
+@dp.message_handler(lambda message: message.text != 'К выбору класса', state=UserState.typing_subs)
 async def typing(message: types.Message, state: FSMContext):
     async with state.proxy() as data1:
         id_class = data1['class']
-    if message.text == 'Подтвердить':
-        knop = types.KeyboardButton('Галя, отмена!')
-        klav = types.ReplyKeyboardMarkup(resize_keyboard=True)
-        klav.add(knop)
-        text_class = class_id[id_class]
-        sending = []
-        mes = text_class + ', замены на завтра:' + '\n'
-        f = open('subs.txt', 'r')
-        lines = f.readlines()
-        for line in lines:
-            if line[0:3] == id_class:
-                sending.append(line[5::])
-        for d in sending:
-            mes += d + '\n'
-        f.close()
-        file_id = open('user_ids_db.txt', 'r')
-        lines_new = file_id.readlines()
-        for b in lines_new:
-            if id_class in b:
-                try:
-                    await bot.send_message(chat_id=int(b[3::]), text=mes)
-                except Exception:
-                    continue
-        await message.answer('Замены отправлены пользователям из класса ' + text_class, reply_markup=klav)
-        await UserState.choosing_class.set()
-    else:
-        f = open('subs.txt', 'a')
+    with open('subs.txt', 'a') as f:
         f.write(id_class + ': ' + message.text + '\n')
-        f.close()
 
 
-@dp.message_handler(lambda message: message.text != 'Галя, отмена!', state=UserState.typing_subs_stream)
+@dp.message_handler(lambda message: message.text != 'К выбору класса', state=UserState.typing_subs_stream)
 async def stream_subs(message: types.Message, state: FSMContext):
     async with state.proxy() as data1:
         id_classes = data1['classes']
-    if message.text == 'Подтвердить':
-        knop = types.KeyboardButton('Галя, отмена!')
-        klav = types.ReplyKeyboardMarkup(resize_keyboard=True)
-        klav.add(knop)
-        sending = []
-        mes = 'Замены на завтра(поток):' + '\n'
-        f = open('subsp.txt', 'r')
-        lines = f.readlines()
-        for line in lines:
-            if line[0:3] in id_classes:
-                sending.append(line[5::])
-        for d in sending:
-            if d in mes:
-                continue
-            else:
-                mes += d + '\n'
-        f.close()
-        file_id = open('user_ids_db.txt', 'r')
-        lines_new = file_id.readlines()
+    with open('subs.txt', 'a') as f:
         for id_class in id_classes:
-            for b in lines_new:
-                if id_class in b:
-                    try:
-                        await bot.send_message(chat_id=int(b[3::]), text=mes)
-                    except Exception:
-                        continue
-        await message.answer('Замены отправлены пользователям из класса выбранной параллели', reply_markup=klav)
-        await UserState.choosing_class.set()
-    else:
-        for id_class in id_classes:
-            f = open('subsp.txt', 'a')
             f.write(id_class + ': ' + message.text + '\n')
-            f.close()
+
+
+@dp.message_handler(lambda message: message.text == 'К выбору класса', state='*')
+async def back_again(message: types.Message, state: FSMContext):
+    await UserState.choosing_class.set()
+    await message.answer('Отправьте класс', reply_markup=sub_kb())
 
 
 @dp.message_handler(commands=['230'])
@@ -282,11 +257,10 @@ async def save_id(message: types.Message):
 async def finishing(message: types.Message):
     f1 = open('user_ids_db.txt', 'r').readlines()
     f2 = open('subs.txt', 'r').read()
-    f3 = open('subsp.txt', 'r').read()
     for line in f1:
-        if line[0:3] not in f2 and line[0:3] not in f3:
+        if line[0:3] not in f2:
             try:
-                await bot.send_message(chat_id=int(line[3::]), text=class_id[line[0:3]] + ' - замен на завтра нет')
+                await bot.send_message(chat_id=int(line[3::]), text=f'{class_id[line[0:3]]} - замен на завтра нет')
             except Exception:
                 continue
         else:
@@ -325,10 +299,8 @@ async def class_id_changing(message: types.Message, state: FSMContext):
 async def view_subs(message: types.Message):
     f = open('subs.txt', 'r')
     f2 = open('user_ids_db.txt', 'r')
-    f3 = open('subsp.txt', 'r')
     lines = f.readlines()
     lines2 = f2.readlines()
-    lines3 = f3.readlines()
     us_id = str(message.from_user.id)
     try:
         current = lines[0]
@@ -345,11 +317,6 @@ async def view_subs(message: types.Message):
     count = 0
     f.close()
     f2.close()
-    f3.close()
-    for line3 in lines3:
-        if class_ids in line3:
-            count += 1
-            mes += line3[5::]
     for line in lines:
         if class_ids in line:
             count += 1
