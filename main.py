@@ -80,6 +80,23 @@ async def save_tid(message: types.Message):
     await message.answer(f'Добро пожаловать, {sfl[1]} {sfl[2]}!', reply_markup=teachers_main())
 
 
+@dp.message_handler(commands=['info'])
+async def get_info(message: types.Message, state: FSMContext):
+    try:
+        async with state.proxy() as data:
+            info = data['information']
+    except Exception:
+        info = get_information(str(message.from_user.id))
+        async with state.proxy() as data:
+            data['information'] = info
+    if info[3] == 'teacher':
+        await message.answer(f'Информация о пользователе\n\nID: {info[1]}\n\nВыбранный формат расписания: {format_dict[info[2]]}\n\nРоль: учитель\n\nФИО: {teachers_id[info[0]]}')
+    elif info[3] == 'student':
+        await message.answer(
+            f'Информация о пользователе\n\nID: {info[1]}\n\nВыбранный формат расписания: {format_dict[info[2]]}\n\n'
+            f'Роль: ученик\n\nКласс: {class_id[info[0]]}')
+
+
 @dp.message_handler(commands=['settings'])
 async def setting_cb(message: types.Message):
     await message.answer('В настройках Вы можете изменить роль или выбрать удобный для Вас формат расписания', reply_markup=call_settings())

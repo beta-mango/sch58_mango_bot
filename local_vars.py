@@ -5,6 +5,7 @@ class_id = {'c01': '7А', 'c02': '7Б', 'c03': '7В', 'c04': '7Г', 'c05': '8А'
 checker = class_id.values()
 teachers_id = {'c15': 'Навроцкий Алексей Сергеевич', 'c16': 'Елагина Ульяна Артемовна'}
 t_enter = {'Навроцкий Алексей': 'c15', 'Елагина Ульяна': 'c16'}
+format_dict = {'text': 'фото и текст', 'photo': 'фото', 'teacher': 'учитель', 'student': 'ученик'}
 days = {'Понедельник': 'monday', 'Вторник': 'tuesday', 'Среда': 'wednesday', 'Четверг': 'thursday', 'Пятница': 'friday'}
 checking = list(days.keys())
 a = ' '
