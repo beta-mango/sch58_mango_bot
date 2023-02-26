@@ -42,18 +42,19 @@ async def start_message(message: types.Message):
             await message.answer(f'Добро пожаловать, {sfl[1]} {sfl[2]}', reply_markup=teachers_main())
     else:
         kb = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
-        b1 = types.KeyboardButton('Я учитель\U0001F9D1')
-        b2 = types.KeyboardButton('Я ученик\U0001F9D1')
+        b1 = types.KeyboardButton('Я учитель👩‍🏫')
+        b2 = types.KeyboardButton('Я ученик🧑‍🎓')
         kb.add(b1, b2)
         await message.answer(
             'Здравствуйте\U0001F44B\nКто вы: учитель или ученик?', reply_markup=kb)
 
 
-@dp.message_handler(lambda message: message.text == 'Я учитель\U0001F9D1' or message.text == 'Я ученик\U0001F9D1')
+@dp.message_handler(lambda message: message.text == 'Я учитель👩‍🏫' or message.text == 'Я ученик🧑‍🎓')
 async def first_time_role(message: types.Message):
-    if message.text == 'Я учитель\U0001F9D1':
-        await message.answer('Принято. Для завершения регистрации отправьте Вашу фамилию и имя.\nНапример: <b>Ларионов Сергей</b>', parse_mode='HTML')
-    elif message.text == 'Я ученик\U0001F9D1':
+    if message.text == 'Я учитель👩‍🏫':
+        await message.answer('К сожалению, регистрация учителей пока недоступна. Вы можете зарегистрироваться как ученик. Аккаунты учителей будут разблокированы в будущих обновлениях')
+        #await message.answer('Принято. Для завершения регистрации отправьте Вашу фамилию и имя.\nНапример: <b>Ларионов Сергей</b>', parse_mode='HTML')
+    elif message.text == 'Я ученик🧑‍🎓':
         await message.answer('Отлично! Выбери класс, в котором учишься, чтобы получать актуальную информацию о заменах', reply_markup=first_time_kb())
 
 
@@ -154,6 +155,9 @@ async def change_to_photo(call: types.CallbackQuery, state: FSMContext):
 
 @dp.callback_query_handler(text='1change role')
 async def change_role(call: types.CallbackQuery, state: FSMContext):
+    await call.message.answer('Эта функция пока недоступна. Она будет разблокирована в будующих обновлениях')
+    await call.answer()
+    '''
     try:
         async with state.proxy() as data:
             info = data['information']
@@ -172,23 +176,45 @@ async def change_role(call: types.CallbackQuery, state: FSMContext):
         kb.add(c1, c2)
         await call.message.edit_text('Подтвердите изменение роли. Текущая роль: учитель', reply_markup=kb)
     await call.answer()
+    '''
 
 
 @dp.callback_query_handler(text='1change to teacher')
 async def change_to_teacher(call: types.CallbackQuery):
     await call.message.delete()
-    await call.message.answer('Для завершения отправьте фамилию и имя учителя.\nНапример: <b>Иньков Владислав</b>', parse_mode='HTML')
+    cancel_kb = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=1)
+    c1 = types.KeyboardButton('Отмена')
+    cancel_kb.add(c1)
+    await call.message.answer('Для завершения отправьте фамилию и имя учителя.\nНапример: <b>Иньков Владислав</b>', parse_mode='HTML', reply_markup=cancel_kb)
     await call.answer()
 
 
-@dp.message_handler(lambda message: not check(str(message.from_user.id)), lambda message: message.text in list(t_enter.keys()))
+@dp.message_handler(lambda message: not check(str(message.from_user.id)), lambda message: message.text in list(t_enter.keys()) or message.text == 'Отмена')
 async def teacher_choice(message: types.Message, state: FSMContext):
-    t_id = t_enter[message.text]
-    sfl = teachers_id[t_id].split(' ')
-    update_role(str(message.from_user.id), t_id, 'teacher')
-    await state.reset_data()
-    await message.answer('Успешно изменено', reply_markup=call_settings())
-    await message.answer(f'Добро пожаловать, {sfl[1]} {sfl[2]}', reply_markup=teachers_main())
+    if message.text != 'Отмена':
+        t_id = t_enter[message.text]
+        sfl = teachers_id[t_id].split(' ')
+        update_role(str(message.from_user.id), t_id, 'teacher')
+        await state.reset_data()
+        await message.answer('Успешно изменено', reply_markup=call_settings())
+        await message.answer(f'Добро пожаловать, {sfl[1]} {sfl[2]}', reply_markup=teachers_main())
+    else:
+        try:
+            async with state.proxy() as data:
+                info = data['information']
+        except Exception:
+            info = get_information(str(message.from_user.id))
+            async with state.proxy() as data:
+                data['information'] = info
+        kb = types.InlineKeyboardMarkup(row_width=1)
+        c2 = types.InlineKeyboardButton(text='Назад', callback_data='back')
+        c1 = types.InlineKeyboardButton(text='Выбрать роль: учитель', callback_data='1change to teacher')
+        kb.add(c1, c2)
+        if info[2] == 'photo':
+            await message.answer('Действие отменено.', reply_markup=kb1_photo())
+        elif info[2] == 'text':
+            await message.answer('Действие отменено.', reply_markup=kb1())
+        await message.answer('Подтвердите изменение роли', reply_markup=kb)
 
 
 @dp.callback_query_handler(text='1change to student')
@@ -805,8 +831,7 @@ async def cancel(message: types.Message, state: FSMContext):
     lambda message: message.text not in checker3 and message.text not in checker4, state='*')
 async def other_mes(message: types.Message):
     await message.answer(
-        'Скорее всего, ты ввел эту команду, потому что ошибся или захотел сломать бота. Пожалуйста, воспользуйся '
-        'клавиатурой на экране')
+        'Скорее всего, Вы ошиблись. Пожалуйста, следуйте инструкциям бота')
 
 
 if __name__ == '__main__':

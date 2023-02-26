@@ -30,6 +30,13 @@ def get_tt(day, class_id):
             b = les_new.index(' ')
             del (les_new[b])
         except Exception:
+            break
+    while True:
+        try:
+            b = les_new.index('-')
+            del (les_new[b])
+            les_new.insert(b, ' ')
+        except Exception:
             return les_new
 
 
