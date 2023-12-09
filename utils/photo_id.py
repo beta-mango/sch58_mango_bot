@@ -3,17 +3,17 @@ from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher.filters.state import State, StatesGroup
 import asyncio
 from aiogram import Bot, Dispatcher, types
-from config import API_TOKEN, PROXY_URL
+#from config import API_TOKEN, PROXY_URL
 
 storage = MemoryStorage()
-bot = Bot(token=API_TOKEN)
+bot = Bot(token='5948532687:AAGv17ff0EQPXZH6ce6g6VjtAbOVOKK9k58')
 dp = Dispatcher(bot, storage=storage)
 
 
-class_id = {'c01': '7А', 'c02': '7Б', 'c03': '7В', 'c04': '7Г', 'c05': '8А', 'c06': '8Б БМ', 'c07': '8Б ФХ',
-            'c08': '8В', 'c09': '8Г', 'c10': '8Д', 'c11': '9А ФМ', 'c12': '9А МИ', 'c13': '9Б', 'c14': '9В',
-            'c15': '9Г', 'c16': '9Д', 'c17': '10А ФМ', 'c18': '10А МЭ', 'c19': '10Б', 'c20': '10В БМ', 'c21': '10В ГУМ',
-            'c22': '11А', 'c23': '11Б', 'c24': '11В МИ', 'c25': '11В БМ', 'c26': '11Г', 'c27': '11Д'}
+class_id = {'c01': '6А', 'c02': '6Б', 'c03': '7А', 'c04': '7Б', 'c05': '7В', 'c06': '8А', 'c07': '8Б',
+            'c08': '8В ФМ', 'c09': '8В МЭ', 'c10': '8Г', 'c11': '9А', 'c12': '9Б ФХ', 'c13': '9Б БМ', 'c14': '9В',
+            'c15': '9Г', 'c16': '9Д', 'c17': '10А ФМ', 'c18': '10А БМ', 'c19': '10Б', 'c20': '10В МИ', 'c21': '10В ГУМ',
+            'c22': '10Г', 'c23': '11А ФМ', 'c24': '11А МЭ', 'c25': '11Б', 'c26': '11В БМ', 'c27': '11В ГУМ'}
 final = {}
 ids = list(class_id.keys())
 ph_ids = []

@@ -8,10 +8,10 @@ from data_operating import *
 from utils.kb_markups import *
 from local_vars import *
 import datetime
-from config import PROXY_URL, API_TOKEN
+
 
 storage = MemoryStorage()
-bot = Bot(token=API_TOKEN)
+bot = Bot(token='5948532687:AAGv17ff0EQPXZH6ce6g6VjtAbOVOKK9k58')
 dp = Dispatcher(bot, storage=storage)
 
 
@@ -27,6 +27,7 @@ class UserState(StatesGroup):
     watch_student = State()
     action_teacher = State()
     choosing_another_teacher = State()
+    for_fun = State()
 
 
 @dp.message_handler(commands=['start'])
@@ -36,7 +37,10 @@ async def start_message(message: types.Message):
         full_info = get_information(str(message.from_user.id))
         if full_info[3] == 'student':
             mes = f'Нашел тебя в базе данных. Твой класс: {class_id[full_info[0]]}. Выбери, что делать дальше'
-            await message.answer(mes, reply_markup=kb1())
+            if full_info[2] == 'text':
+                await message.answer(mes, reply_markup=kb1())
+            elif full_info[2] == 'photo':
+                await message.answer(mes, reply_markup=kb1_photo())
         elif full_info[3] == 'teacher':
             sfl = teachers_id[full_info[0]].split(' ')
             await message.answer(f'Добро пожаловать, {sfl[1]} {sfl[2]}', reply_markup=teachers_main())
@@ -47,6 +51,21 @@ async def start_message(message: types.Message):
         kb.add(b1, b2)
         await message.answer(
             'Здравствуйте\U0001F44B\nКто вы: учитель или ученик?', reply_markup=kb)
+
+
+@dp.message_handler(commands=['fun'])
+async def fun_sending(message:types.Message):
+    await UserState.for_fun.set()
+
+
+@dp.message_handler(lambda message: message.text != 'Галя, отмена!', state=UserState.for_fun)
+async def final_fun(message: types.Message, state: FSMContext):
+    send_list = message.text.split('/')
+    try:
+        await bot.send_message(chat_id=int(send_list[0]), text=send_list[1])
+    except Exception:
+        await message.answer('error')
+    await state.finish()
 
 
 @dp.message_handler(lambda message: message.text == 'Я учитель👩‍🏫' or message.text == 'Я ученик🧑‍🎓')
@@ -155,9 +174,6 @@ async def change_to_photo(call: types.CallbackQuery, state: FSMContext):
 
 @dp.callback_query_handler(text='1change role')
 async def change_role(call: types.CallbackQuery, state: FSMContext):
-    await call.message.answer('Эта функция пока недоступна. Она будет разблокирована в будующих обновлениях')
-    await call.answer()
-    '''
     try:
         async with state.proxy() as data:
             info = data['information']
@@ -176,7 +192,6 @@ async def change_role(call: types.CallbackQuery, state: FSMContext):
         kb.add(c1, c2)
         await call.message.edit_text('Подтвердите изменение роли. Текущая роль: учитель', reply_markup=kb)
     await call.answer()
-    '''
 
 
 @dp.callback_query_handler(text='1change to teacher')
@@ -226,7 +241,9 @@ async def change_to_student(call: types.CallbackQuery):
 @dp.callback_query_handler(Text(startswith='t'))
 async def class_choice(call: types.CallbackQuery):
     p = call.data[1::]
-    if p == '7':
+    if p == '6':
+        await call.message.edit_text(text='Шестые классы:', reply_markup=call_six())
+    elif p == '7':
         await call.message.edit_text('Седьмые классы:', reply_markup=call_seven())
     elif p == '8':
         await call.message.edit_text('Восьмые классы:', reply_markup=call_eight())
@@ -277,7 +294,11 @@ async def updating(message: types.Message):
     with open('user_ids_db.txt', 'r') as f:
         lines = f.readlines()
         for line in lines:
-            info = get_information(line[3:-1])
+            try:
+                info = get_information(line[3:-1])
+            except Exception:
+                print(line)
+                continue
             try:
                 if info[3] == 'teacher':
                     await bot.send_message(chat_id=int(line[3::]), text='Бот запущен', reply_markup=teachers_main())
@@ -540,6 +561,8 @@ async def sub_sender(message: types.Message, state: FSMContext):
 
 @dp.message_handler(lambda message: message.text == 'Моё расписание\U0001F4DA')
 async def teacher_tt(message: types.Message, state: FSMContext):
+    await message.answer('Пока недоступно')
+    '''
     try:
         async with state.proxy() as data:
             info = data['information']
@@ -552,6 +575,7 @@ async def teacher_tt(message: types.Message, state: FSMContext):
         await message.answer_photo(id_photo)
     elif info[2] == 'text':
         await message.answer('Выберите день', reply_markup=teacher_text_tt())
+    '''
 
 
 @dp.message_handler(lambda message: message.text == 'Расписание учеников\U0001F4D5')
@@ -659,7 +683,7 @@ async def timetables(message: types.Message, state: FSMContext):
         btn4 = types.KeyboardButton('Четверг')
         btn5 = types.KeyboardButton('Пятница')
         btn6 = types.KeyboardButton('Фото расписания\U0001F4F8')
-        btn7 = types.KeyboardButton('Расписание другого класса')
+        btn7 = types.KeyboardButton('Расписание другого класса\U0001F4D5')
         btn8 = types.KeyboardButton('Домой\U0001F3E0')
         markup2.add(btn1, btn2, btn3, btn4, btn5, btn6, btn7, btn8)
         await message.answer('Выбери день', reply_markup=markup2)
@@ -698,7 +722,7 @@ async def photo_tt(message: types.Message, state: FSMContext):
     await message.answer_photo(id_photo)
 
 
-@dp.message_handler(lambda message: message.text == 'Расписание другого класса')
+@dp.message_handler(lambda message: message.text == 'Расписание другого класса\U0001F4D5')
 async def other_tt(message: types.Message):
     kb3 = kb2()
     await UserState.other_ttable.set()
@@ -782,7 +806,7 @@ async def back_my_class(message: types.Message, state: FSMContext):
         btn4 = types.KeyboardButton('Четверг')
         btn5 = types.KeyboardButton('Пятница')
         btn6 = types.KeyboardButton('Фото расписания\U0001F4F8')
-        btn7 = types.KeyboardButton('Расписание другого класса')
+        btn7 = types.KeyboardButton('Расписание другого класса\U0001F4D5')
         btn8 = types.KeyboardButton('Домой\U0001F3E0')
         markup2.add(btn1, btn2, btn3, btn4, btn5, btn6, btn7, btn8)
         await state.reset_state(with_data=False)
@@ -801,7 +825,7 @@ async def back_my_class(message: types.Message, state: FSMContext):
     btn4 = types.KeyboardButton('Четверг')
     btn5 = types.KeyboardButton('Пятница')
     btn6 = types.KeyboardButton('Фото расписания\U0001F4F8')
-    btn7 = types.KeyboardButton('Расписание другого класса')
+    btn7 = types.KeyboardButton('Расписание другого класса\U0001F4D5')
     btn8 = types.KeyboardButton('Домой\U0001F3E0')
     markup2.add(btn1, btn2, btn3, btn4, btn5, btn6, btn7, btn8)
     await state.reset_state(with_data=False)
@@ -830,8 +854,8 @@ async def cancel(message: types.Message, state: FSMContext):
 @dp.message_handler(
     lambda message: message.text not in checker3 and message.text not in checker4, state='*')
 async def other_mes(message: types.Message):
-    await message.answer(
-        'Скорее всего, Вы ошиблись. Пожалуйста, следуйте инструкциям бота')
+    pass
+    #await message.answer('Скорее всего, Вы ошиблись. Пожалуйста, следуйте инструкциям бота')
 
 
 if __name__ == '__main__':
