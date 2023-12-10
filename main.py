@@ -8,11 +8,12 @@ from data_operating import *
 from utils.kb_markups import *
 from pictures.processing import *
 from local_vars import *
+from config import *
 import datetime
 
 
 storage = MemoryStorage()
-bot = Bot(token='5777518591:AAFOmm0QCF6p4bzcnwLtGv9ydaVAuhIFfGs')
+bot = Bot(token=API_TOKEN)
 dp = Dispatcher(bot, storage=storage)
 
 
