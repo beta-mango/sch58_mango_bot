@@ -214,20 +214,22 @@ def kb1():
     kbrd = [
         [types.KeyboardButton('Узнать расписание\U0001F4DA')],
         [types.KeyboardButton('Изменить любимый класс\U0001F504')],
-        [types.KeyboardButton('Посмотреть замены\U0001F440')]
+        [types.KeyboardButton('Посмотреть замены\U0001F440')],
+        [types.KeyboardButton('Меню\U0001F372')]
     ]
     markup4 = types.ReplyKeyboardMarkup(keyboard=kbrd, resize_keyboard=True, row_width=1)
     return markup4
 
 
 def kb1_photo():
-    kb = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=1)
+    kb_main = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=1)
     m1 = types.KeyboardButton('Узнать расписание\U0001F4DA')
     m2 = types.KeyboardButton('Расписание другого класса\U0001F4D5')
     m3 = types.KeyboardButton('Изменить любимый класс\U0001F504')
     m4 = types.KeyboardButton('Посмотреть замены\U0001F440')
-    kb.add(m1, m2, m3, m4)
-    return kb
+    m5 = types.KeyboardButton('Меню\U0001F372')
+    kb_main.add(m1, m2, m3, m4, m5)
+    return kb_main
 
 
 def kb4():
@@ -250,7 +252,8 @@ def teachers_main():
     btn1 = types.KeyboardButton('Расписание учеников\U0001F4D5')
     btn2 = types.KeyboardButton('Выбрать другого учителя\U0001F504')
     btn3 = types.KeyboardButton('Замены учеников\U0001F440')
-    menu.add(btn0, btn1, btn2, btn3)
+    btn4 = types.KeyboardButton('Меню\U0001F372')
+    menu.add(btn0, btn1, btn2, btn3, btn4)
     return menu
 
 
@@ -264,6 +267,18 @@ def teacher_text_tt():
     btn6 = types.KeyboardButton('Фото расписания\U0001F4F8')
     btn8 = types.KeyboardButton('Домой\U0001F3E0')
     markup2.add(btn1, btn2, btn3, btn4, btn5, btn6, btn8)
+    return markup2
+
+
+def menu_days():
+    markup2 = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
+    btn1 = types.KeyboardButton('Понедельник')
+    btn2 = types.KeyboardButton('Вторник')
+    btn3 = types.KeyboardButton('Среда')
+    btn4 = types.KeyboardButton('Четверг')
+    btn5 = types.KeyboardButton('Пятница')
+    btn6 = types.KeyboardButton('Домой\U0001F3E0')
+    markup2.add(btn1, btn2, btn3, btn4, btn5, btn6)
     return markup2
 
 

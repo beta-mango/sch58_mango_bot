@@ -6,12 +6,13 @@ import asyncio
 from aiogram import Bot, Dispatcher, types, executor
 from data_operating import *
 from utils.kb_markups import *
+from pictures.processing import *
 from local_vars import *
 import datetime
 
 
 storage = MemoryStorage()
-bot = Bot(token='5948532687:AAGv17ff0EQPXZH6ce6g6VjtAbOVOKK9k58')
+bot = Bot(token='5777518591:AAFOmm0QCF6p4bzcnwLtGv9ydaVAuhIFfGs')
 dp = Dispatcher(bot, storage=storage)
 
 
@@ -28,6 +29,8 @@ class UserState(StatesGroup):
     action_teacher = State()
     choosing_another_teacher = State()
     for_fun = State()
+    choosing_menu_day = State()
+    adding_new_menu = State()
 
 
 @dp.message_handler(commands=['start'])
@@ -71,8 +74,7 @@ async def final_fun(message: types.Message, state: FSMContext):
 @dp.message_handler(lambda message: message.text == 'Я учитель👩‍🏫' or message.text == 'Я ученик🧑‍🎓')
 async def first_time_role(message: types.Message):
     if message.text == 'Я учитель👩‍🏫':
-        await message.answer('К сожалению, регистрация учителей пока недоступна. Вы можете зарегистрироваться как ученик. Аккаунты учителей будут разблокированы в будущих обновлениях')
-        #await message.answer('Принято. Для завершения регистрации отправьте Вашу фамилию и имя.\nНапример: <b>Ларионов Сергей</b>', parse_mode='HTML')
+        await message.answer('Принято. Для завершения регистрации отправьте Вашу фамилию и имя.\nНапример: <b>Семлёв Владимир</b>', parse_mode='HTML')
     elif message.text == 'Я ученик🧑‍🎓':
         await message.answer('Отлично! Выбери класс, в котором учишься, чтобы получать актуальную информацию о заменах', reply_markup=first_time_kb())
 
@@ -85,7 +87,7 @@ async def save_id(message: types.Message):
         id_full = id_class + user_id
         ids_file.write(id_full + '\n')
     save_information(id_class, user_id, 'student')
-    await message.answer('Ты в главном меню', reply_markup=kb1())
+    await message.answer('Ты в главном меню', reply_markup=kb1_photo())
 
 
 @dp.message_handler(lambda message: check(str(message.from_user.id)), lambda message: message.text in list(t_enter.keys()))
@@ -287,6 +289,32 @@ async def back_to_menu(call: types.CallbackQuery):
 async def quit_menu(call: types.CallbackQuery):
     await call.message.delete()
     await call.answer()
+
+
+@dp.message_handler(commands=['menu_add'])
+async def add_menu(message: types.Message):
+    await UserState.adding_new_menu.set()
+    f = open('pictures/menu.txt', 'w')
+    f.close()
+    kb_menu = types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
+    btn0 = types.KeyboardButton('Домой\U0001F3E0')
+    kb_menu.add(btn0)
+    await message.answer('Now send me photos. Enter date when you finish', reply_markup=kb_menu)
+
+
+@dp.message_handler(content_types=['photo'], state=UserState.adding_new_menu)
+async def recording_photos(message: types.Message):
+    with open('pictures/menu.txt', 'a') as f:
+        f.write(message.photo[0].file_id + '\n')
+    await message.answer('Done')
+
+
+@dp.message_handler(content_types=['text'], state=UserState.adding_new_menu)
+async def recording_date(message: types.Message, state: FSMContext):
+    with open('pictures/menu.txt', 'a') as f:
+        f.write(message.text)
+    await state.reset_state()
+    await message.answer('Finished')
 
 
 @dp.message_handler(commands=['update'])
@@ -557,6 +585,42 @@ async def sub_sender(message: types.Message, state: FSMContext):
         await message.answer('Замен на завтра нет')
     else:
         await message.answer(mes)
+
+
+@dp.message_handler(lambda message: message.text == 'Меню\U0001F372')
+async def menu_discover(message: types.Message):
+    day_id = count_weekday()
+    with open('pictures/menu.txt', 'r') as f:
+        menu_vars = f.readlines()
+    photo_id = menu_vars[day_id]
+    menu_quest = types.InlineKeyboardMarkup(row_width=2)
+    c1 = types.InlineKeyboardButton(text='Да✅', callback_data='yes_menu')
+    c2 = types.InlineKeyboardButton(text='Нет❌', callback_data='no_menu')
+    menu_quest.add(c1, c2)
+    await message.answer_photo(photo_id[:-1])
+    await message.answer('Доступны меню для других дней этой недели. Хотите посмотреть?', reply_markup=menu_quest)
+
+
+@dp.callback_query_handler(text='yes_menu')
+async def other_menu(call: types.CallbackQuery):
+    await UserState.choosing_menu_day.set()
+    await call.message.delete()
+    await call.message.answer('Пожалуйста, выберите день недели', reply_markup=menu_days())
+    await call.answer()
+
+
+@dp.message_handler(lambda message: message.text in list(days_ids.keys()), state=UserState.choosing_menu_day)
+async def sending_menu(message: types.Message):
+    with open('pictures/menu.txt', 'r') as f:
+        menu_lines = f.readlines()
+    photo_id = menu_lines[days_ids[message.text]]
+    await message.answer_photo(photo_id[:-1])
+
+
+@dp.callback_query_handler(text='no_menu')
+async def menu_cancel(call: types.CallbackQuery):
+    await call.message.delete()
+    await call.answer()
 
 
 @dp.message_handler(lambda message: message.text == 'Моё расписание\U0001F4DA')
@@ -854,8 +918,7 @@ async def cancel(message: types.Message, state: FSMContext):
 @dp.message_handler(
     lambda message: message.text not in checker3 and message.text not in checker4, state='*')
 async def other_mes(message: types.Message):
-    pass
-    #await message.answer('Скорее всего, Вы ошиблись. Пожалуйста, следуйте инструкциям бота')
+    await message.answer('Скорее всего, Вы ошиблись. Пожалуйста, следуйте инструкциям бота')
 
 
 if __name__ == '__main__':

@@ -84,7 +84,7 @@ def update_teacher(teacher_id, tg_id):
 
 
 def save_information(class_id, tg_id, user_role):
-    data_tuple = (class_id, tg_id, 'text', user_role)
+    data_tuple = (class_id, tg_id, 'photo', user_role)
     cur2.execute('INSERT INTO user_data(class_id, tg_id, ttable_format, user_role) VALUES(?, ?, ?, ?);', data_tuple)
     connection2.commit()
 
